@@ -17,14 +17,20 @@ export default defineConfig({
         },
     },
     test: {
-        environment: "jsdom",
+        environment: 'jsdom',
         include: ["tests/unit/**/*.test.js", "tests/components/**/*.test.js"],
         setupFiles: ["tests/setup.js"],
         coverage: {
-            provider: "v8",
-            reporter: ["html", "text"],
-            include: ["src/**/*.{js,vue}"],
-            exclude: ["src/main.js"],
+            provider: 'v8',
+            reporter: ['html', 'text', 'json-summary'],
+            include: ['src/**/*.{js,vue}'],
+            exclude: ['src/main.js'],
+            thresholds: {
+                lines: 80,
+                functions: 80,
+                statements: 80,
+                branches: 70,
+            },
         },
     }
 })

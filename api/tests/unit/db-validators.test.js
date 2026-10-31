@@ -1,57 +1,55 @@
-
-
+// ============================================================
+// PRUEBA UNITARIA: helpers de validación contra BD (db-validators)
+//
+// Usamos vi.spyOn para "falsear" Usuario.findOne: así probamos la lógica
+// del helper sin necesitar un MongoDB real.
+// ============================================================
 import { afterEach, describe, expect, it, vi } from "vitest";
 import usuario from "../../models/usuario.js";
-import {emailExiste, esRolValido} from "../../helpers/db-validators.js"
+import { emailExiste, esRolValido } from "../../helpers/db-validators.js";
 
-describe("test Helper db-validators", () =>{
+describe("helper esRolValido", () => {
+    it("acepta el rol admin", () => {
+        expect(esRolValido("admin")).toBe(true);
+    });
 
-    describe("Si el Rol es valido", ()=>{
+    it("acepta el rol usuario", () => {
+        expect(esRolValido("usuario")).toBe(true);
+    });
 
-        it("acepta el Rol admin",()=>{
+    it.each(["jefe", "ADMIN", "", undefined, null])("rechaza el rol %j", (rol) => {
+        expect(() => esRolValido(rol)).toThrow("El rol debe ser uno de: admin, usuario");
+    });
+});
 
-            expect(esRolValido("admin")).toBe(true)
+describe("helper emailExiste", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-        })
-        it("acepta el Rol usuario",()=>{
+    it("no falla si el email no está registrado", async () => {
+        vi.spyOn(usuario, "findOne").mockResolvedValue(null);
 
-            expect(esRolValido("usuario")).toBe(true)
-            
-        })
-        it.each(["jefe", "ADMIN", "", undefined])("rechaza el Rol %j",(rol)=>{
+        await expect(emailExiste("nuevo@test.com")).resolves.toBeUndefined();
+    });
 
-            expect(() => esRolValido(rol)).toThrow("El rol debe ser uno de: admin, usuario")
-        }
-        )
-    })
-    describe("Existe Email", ()=>{
+    it("busca el email normalizado (sin espacios y en minúsculas)", async () => {
+        const findOne = vi.spyOn(usuario, "findOne").mockResolvedValue(null);
 
-        afterEach(()=>{
-            vi.restoreAllMocks()
-        })
+        await emailExiste("  TEST@TEST.com  ");
 
-        it("No falla si no existe el email o no esta registrado", async ()=>{
+        expect(findOne).toHaveBeenCalledWith({ email: "test@test.com" });
+    });
 
-            vi.spyOn(usuario, "findOne").mockResolvedValue(null)
+    it("falla si el email ya pertenece a otro usuario", async () => {
+        vi.spyOn(usuario, "findOne").mockResolvedValue({ id: "otro-usuario" });
 
-            await expect(emailExiste("trtes@gmail.com")).resolves.toBeUndefined()
-        })
+        await expect(emailExiste("test@test.com")).rejects.toThrow("Ese email ya está registrado");
+    });
 
-        it("creacion y validacion de busqueda de usuario", async ()=>{
-            const findOne = vi.spyOn(usuario, "findOne").mockResolvedValue(null)
+    it("permite conservar el propio email al actualizar el perfil", async () => {
+        vi.spyOn(usuario, "findOne").mockResolvedValue({ id: "mi-id" });
 
-            await emailExiste("test@test.com")
-
-            expect(findOne).toHaveBeenCalledWith({email: "test@test.com"})
-        })
-
-        it("Error si existe el email en la base de datos",  async ()=>{
-
-            vi.spyOn(usuario, "findOne").mockResolvedValue({ id: "otro-usuario" })
-
-            await expect(emailExiste("test@test.com")).rejects.toThrow("Ese email ya está registrado")
-        })
-
-
-    })
-})
+        await expect(emailExiste("test@test.com", "mi-id")).resolves.toBeUndefined();
+    });
+});

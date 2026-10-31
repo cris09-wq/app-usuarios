@@ -3,13 +3,10 @@
 // Estructura MVC:
 //   app.js · database/ · models/ · routes/ · controllers/ · middlewares/ · helpers/
 // Ejecutar: npm run dev
-// Requiere .env con PUERTO, MONGODB_CNX y JWT_SECRET (ver .env.example)
+// Requiere .env con JWT_SECRET (ver .env.example)
 // ============================================================
 
-import "dotenv/config";
 import express from "express";
-import { dbConnection } from "./database/config.js";
-import { crearAdminInicial } from "./database/seed.js";
 import authRouter from "./routes/auth.js";
 import usuariosRouter from "./routes/usuarios.js";
 
@@ -38,7 +35,7 @@ app.use((req, res) => {
 });
 
 // 5. Middleware de errores
-app.use((err, req, res, next) => {
+export const manejarErrores = (err, req, res, next) => {
   // JSON mal formado en el body
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ error: "El cuerpo de la petición no es un JSON válido" });
@@ -54,24 +51,8 @@ app.use((err, req, res, next) => {
 
   console.log("ERROR:", err.message);
   res.status(500).json({ error: "Error interno" });
-});
+};
+app.use(manejarErrores);
 
-// La BD primero, el servidor después
-dbConnection()
-  .then(async () => {
-    const admin = await crearAdminInicial();
-    if (admin) console.log(`Administrador inicial creado: ${admin.email}`);
-
-    const puerto = process.env.PUERTO ?? 3000;
-    app
-      .listen(puerto, () => {
-        console.log(`API en http://localhost:${puerto}/api`);
-      })
-      .on("error", (error) => {
-        console.log(`No se pudo usar el puerto ${puerto}:`, error.message);
-        process.exit(1);
-      });
-  })
-  .catch((error) => {
-    console.log("No se pudo iniciar:", error.message);
-  });
+// Se exporta la app para que Supertest pueda usarla SIN abrir un puerto real.
+export default app;

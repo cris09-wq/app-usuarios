@@ -4,4 +4,5 @@ afterEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    document.body.innerHTML = ""
 })
