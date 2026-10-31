@@ -1,0 +1,29 @@
+{
+  "name": "app-usuarios-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API REST con autenticación JWT y CRUD de usuarios (MVC + MongoDB)",
+  "scripts": {
+    "dev": "node --watch app.js",
+    "start": "node app.js",
+    "seed": "node database/seed.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage "
+
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@vitest/coverage-v8": "^5.0.5",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "express-validator": "^7.3.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.5",
+    "vitest": "^5.0.5"
+  }
+}
